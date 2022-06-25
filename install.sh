@@ -84,7 +84,7 @@ Init_Install()
     Install_Libmcrypt
     Install_Mhash
     Install_Mcrypt
-    Install_Freetype
+    #Install_Freetype
     Install_Pcre
     Install_Icu4c
     if [ "${SelectMalloc}" = "2" ]; then

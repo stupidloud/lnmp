@@ -1,0 +1,19 @@
+name: Build test
+
+on:
+  watch:
+    types: [started]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Checkout
+      run: cat install.sh
+      
+    - name: Build
+      run: |
+        LNMP_Auto="y" DBSelect="10" DB_Root_Password="lnmp.org" InstallInnodb="y" PHPSelect="2" SelectMalloc="1" sudo -E ./install.sh lnmp
