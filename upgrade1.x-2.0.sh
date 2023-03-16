@@ -51,15 +51,18 @@ Upgrade_Dependent()
             do dnf --enablerepo=crb install ${cs9packages} -y; done
         fi
 
-        if echo "${CentOS_Version}" | grep -Eqi "^7" || echo "${RHEL_Version}" | grep -Eqi "^7"  || echo "${Aliyun_Version}" | grep -Eqi "^2" || echo "${Alibaba_Version}" | grep -Eqi "^2" || echo "${Oracle_Version}" | grep -Eqi "^7"; then
+        if echo "${CentOS_Version}" | grep -Eqi "^7" || echo "${RHEL_Version}" | grep -Eqi "^7"  || echo "${Aliyun_Version}" | grep -Eqi "^2" || echo "${Alibaba_Version}" | grep -Eqi "^2" || echo "${Oracle_Version}" | grep -Eqi "^7" || echo "${Anolis_Version}" | grep -Eqi "^7"; then
             if [ "${DISTRO}" = "Oracle" ]; then
                 yum -y install oracle-epel-release
             else
                 yum -y install epel-release
                 Get_Country
                 if [ "${country}" = "CN" ]; then
-                    sed -i "s@^#baseurl=http://download.fedoraproject.org/pub@baseurl=http://mirrors.aliyun.com@g" /etc/yum.repos.d/epel*.repo
-                    sed -i "s@^metalink@#metalink@g" /etc/yum.repos.d/epel*.repo
+                    sed -e 's!^metalink=!#metalink=!g' \
+                        -e 's!^#baseurl=!baseurl=!g' \
+                        -e 's!//download\.fedoraproject\.org/pub!//mirrors.ustc.edu.cn!g' \
+                        -e 's!//download\.example/pub!//mirrors.ustc.edu.cn!g' \
+                        -i /etc/yum.repos.d/epel*.repo
                 fi
             fi
             yum -y install oniguruma oniguruma-devel
@@ -97,7 +100,7 @@ Upgrade_Dependent()
         export DEBIAN_FRONTEND=noninteractive
         apt-get update -y
         [[ $? -ne 0 ]] && apt-get update --allow-releaseinfo-change -y
-        for packages in debian-keyring debian-archive-keyring build-essential bison libkrb5-dev libcurl3-gnutls libcurl4-gnutls-dev libcurl4-openssl-dev libcap-dev ca-certificates libc-client2007e-dev psmisc patch git libc-ares-dev libicu-dev e2fsprogs libxslt1.1 libxslt1-dev libc-client-dev xz-utils libexpat1-dev bzip2 libbz2-dev libaio-dev libtirpc-dev libsqlite3-dev libonig-dev pkg-config libtinfo-dev libnuma-dev libwebp-dev;
+        for packages in debian-keyring debian-archive-keyring build-essential bison libkrb5-dev libcurl3-gnutls libcurl4-gnutls-dev libcurl4-openssl-dev libcap-dev ca-certificates libc-client2007e-dev psmisc patch git libc-ares-dev libicu-dev e2fsprogs libxslt1.1 libxslt1-dev libc-client-dev xz-utils libexpat1-dev bzip2 libbz2-dev libaio-dev libtirpc-dev libsqlite3-dev libonig-dev pkg-config libtinfo-dev libnuma-dev libwebp-dev gnutls-dev;
         do apt-get --no-install-recommends install -y $packages; done
     fi
 }
@@ -204,7 +207,7 @@ if [ "${isSSL}" == "ssl" ]; then
         fi
 
         echo "Starting create SSL Certificate use Let's Encrypt..."
-        /usr/local/acme.sh/acme.sh --server letsencrypt --issue ${letsdomain} -w ${vhostdir} --reloadcmd "/etc/init.d/nginx reload"
+        /usr/local/acme.sh/acme.sh --server letsencrypt --issue ${letsdomain} -w ${vhostdir} -k 2048 --reloadcmd "/etc/init.d/nginx reload"
         lets_status=$?
         if [ "${lets_status}" = 0 ]; then
             Echo_Green "Let's Encrypt SSL Certificate create successfully."
@@ -321,7 +324,7 @@ if [ "${isSSL}" == "ssl" ]; then
         fi
 
         echo "Starting create SSL Certificate use Let's Encrypt..."
-        /usr/local/acme.sh/acme.sh --server letsencrypt --issue ${letsdomain} -w ${vhostdir} --reloadcmd "/etc/init.d/httpd graceful"
+        /usr/local/acme.sh/acme.sh --server letsencrypt --issue ${letsdomain} -w ${vhostdir} -k 2048 --reloadcmd "/etc/init.d/httpd graceful"
         lets_status=$?
         if [ "${lets_status}" = 0 ]; then
             Echo_Green "Let's Encrypt SSL Certificate create successfully."
@@ -348,7 +351,7 @@ if [ "${isSSL}" == "ssl" ]; then
     fi
 else
     echo "+--------------------------------------------------+"
-    echo "|  A tool to upgrade lnmp manager from 1.x to 1.9  |"
+    echo "|  A tool to upgrade lnmp manager from 1.x to 2.0  |"
     echo "+--------------------------------------------------+"
     echo "|For more information please visit https://lnmp.org|"
     echo "+--------------------------------------------------+"

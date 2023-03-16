@@ -1,3 +1,5 @@
+**当前为lnmp 2.0测试版**
+
 # LNMP一键安装包 - Readme
 
 ## LNMP一键安装包是什么?
@@ -17,13 +19,13 @@ LNMP一键安装包是一个用Linux Shell编写的可以为CentOS/RHEL/Fedora/D
 
 安装前确认已经安装wget命令，如提示wget: command not found ，使用`yum install wget` 或 `apt-get install wget` 命令安装。
 为防止掉线等情况，建议使用screen，可以先执行：screen -S lnmp 命令后，再执行LNMP安装命令：
-`wget http://soft.vpser.net/lnmp/lnmp1.9.tar.gz -cO lnmp1.9.tar.gz && tar zxf lnmp1.9.tar.gz && cd lnmp1.9 && ./install.sh {lnmp|lnmpa|lamp}`
+`wget http://soft.vpser.net/lnmp/lnmp2.0beta.tar.gz -cO lnmp2.0beta.tar.gz && tar zxf lnmp2.0beta.tar.gz && cd lnmp2.0 && ./install.sh {lnmp|lnmpa|lamp}`
 
 如断线可使用`screen -r lnmp` 恢复。**详细安装教程参考：<https://lnmp.org/install.html>**
 
 ## 常用功能说明
 
-**以下操作需在lnmp安装包目录下执行，如lnmp1.9**
+**以下操作需在lnmp安装包目录下执行，如lnmp2.0**
 
 ### 自定义参数
 lnmp.conf配置文件，可以修改lnmp.conf自定义下载服务器地址、网站/数据库目录及添加nginx模块和php编译参数；不论安装升级都会调用该文件里的设置(如果修改了默认的参数建议备份此文件)；
@@ -114,10 +116,11 @@ MariaDB 10.5 | 9 | PHP 7.3 | 9 | | | |
 MariaDB 10.6 | 10 | PHP 7.4 | 10 | | | |
 不安装数据库 | 0 | PHP 8.0 | 11 | | | |
 | | | PHP 8.1 | 12 | | | |
+| | | PHP 8.2 | 13 | | | |
 
 * 以LNMP模式，默认选项安装MySQL 5.5、MySQL root密码设置为lnmp.org、启用InnoDB、PHP 5.6、不安装内存分配器为例，先执行([建议先运行screen](https://www.vpser.net/manage/run-screen-lnmp.html))，再下载解压lnmp安装包：
 
-`wget http://soft.vpser.net/lnmp/lnmp1.9.tar.gz -cO lnmp1.9.tar.gz && tar zxf lnmp1.9.tar.gz && cd lnmp1.9`
+`wget http://soft.vpser.net/lnmp/lnmp2.0beta.tar.gz -cO lnmp2.0beta.tar.gz && tar zxf lnmp2.0beta.tar.gz && cd lnmp2.0`
 
 然后设置无人值守参数并安装：
 
@@ -188,6 +191,7 @@ MariaDB 10.6 | 10 | PHP 7.4 | 10 | | | |
 |Enable_Nginx_Openssl|Nginx是否使用新版openssl|默认 y，建议不修改，y是启用并开启到http2|
 |Enable_PHP_Fileinfo|是否安装开启php的fileinfo模块|默认n，根据自己情况而定，安装启用的话改成 y|
 |Enable_Nginx_Lua|是否为Nginx安装lua支持|默认n，安装lua可以使用一些基于lua的waf网站防火墙|
+|Enable_Ngx_FancyIndex|是否按fancyIndex模块|默认n，fancyIndex是一个第三方目录索引模块|
 |Enable_Swap|是否添加SWAP|默认y，当内存不足时可提高编译安装成功概率|
 |Enable_PHP_Exif|是否添加PHP exif模块|默认n，更改为y即安装|
 |Enable_PHP_Fileinfo|是否添加PHP fileinfo模块|默认n，更改为y即安装，需1GB以上内存|

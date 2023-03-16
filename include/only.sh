@@ -67,7 +67,7 @@ DB_Dependent()
             rpm -e mysql mysql-libs --nodeps
             rpm -e mariadb mariadb-libs --nodeps
         fi
-        for packages in make cmake gcc gcc-c++ gcc-g77 flex bison wget zlib zlib-devel openssl openssl-devel ncurses ncurses-devel libaio-devel rpcgen libtirpc-devel patch cyrus-sasl-devel pkg-config pcre-devel libxml2-devel hostname ncurses-libs numactl-devel libxcrypt;
+        for packages in make cmake gcc gcc-c++ gcc-g77 flex bison wget zlib zlib-devel openssl openssl-devel ncurses ncurses-devel libaio-devel rpcgen libtirpc-devel patch cyrus-sasl-devel pkg-config pcre-devel libxml2-devel hostname ncurses-libs numactl-devel libxcrypt gnutls-devel initscripts;
         do yum -y install $packages; done
         if echo "${CentOS_Version}" | grep -Eqi "^8" || echo "${RHEL_Version}" | grep -Eqi "^8" || echo "${Rocky_Version}" | grep -Eqi "^8" || echo "${Alma_Version}" | grep -Eqi "^8"; then
             Check_PowerTools
@@ -107,7 +107,7 @@ DB_Dependent()
         dpkg -l |grep mysql
         dpkg -P mysql-server mysql-common libmysqlclient15off libmysqlclient15-dev
         dpkg -P mariadb-client mariadb-server mariadb-common
-        for packages in debian-keyring debian-archive-keyring build-essential gcc g++ make cmake autoconf automake wget openssl libssl-dev zlib1g zlib1g-dev libncurses5 libncurses5-dev bison libaio-dev libtirpc-dev libsasl2-dev pkg-config libpcre2-dev libxml2-dev libtinfo-dev libnuma-dev;
+        for packages in debian-keyring debian-archive-keyring build-essential gcc g++ make cmake autoconf automake wget openssl libssl-dev zlib1g zlib1g-dev libncurses5 libncurses5-dev bison libaio-dev libtirpc-dev libsasl2-dev pkg-config libpcre2-dev libxml2-dev libtinfo-dev libnuma-dev gnutls-dev;
         do apt-get --no-install-recommends install -y $packages; done
     fi
 }
@@ -117,31 +117,46 @@ Install_Database()
     echo "============================check files=================================="
     cd ${cur_dir}/src
     if [[ "${DBSelect}" =~ ^[12345]$ ]]; then
-        if [[ "${Bin}" = "y" && "${DBSelect}" = "4" ]]; then
-            Get_Country
-            if [ "${country}" = "CN" ]; then
-                Download_Files https://mirrors.aliyun.com/mysql/MySQL-5.7/${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.gz ${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.gz
-            else
-                Download_Files https://cdn.mysql.com/Downloads/MySQL-5.7/${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.gz ${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.gz
-            fi
-            if [ $? -ne 0 ]; then
-                Download_Files https://cdn.mysql.com/archives/mysql-5.7/${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.gz ${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.gz
+        if [[ "${Bin}" = "y" && "${DBSelect}" =~ ^[2-4]$ ]]; then
+            Mysql_Ver_Short=$(echo ${Mysql_Ver} | sed 's/mysql-//' | cut -d. -f1-2)
+            Download_Files https://cdn.mysql.com/Downloads/MySQL-${Mysql_Ver_Short}/${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.gz ${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.gz
+            [[ $? -ne 0 ]] && Download_Files https://cdn.mysql.com/archives/mysql-${Mysql_Ver_Short}/${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.gz ${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.gz
+            if [ ! -s ${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.gz ]; then
+                Echo_Red "Error! Unable to download MySQL ${Mysql_Ver_Short} Generic Binaries, please download it to src directory manually."
+                sleep 5
+                exit 1
             fi
         elif [[ "${Bin}" = "y" && "${DBSelect}" = "5" ]]; then
-            Get_Country
-            if [ "${country}" = "CN" ]; then
-                Download_Files https://mirrors.aliyun.com/mysql/MySQL-8.0/${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.xz ${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.xz
-            else
-                Download_Files https://cdn.mysql.com/Downloads/MySQL-8.0/${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.xz ${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.xz
-            fi
-            if [ $? -ne 0 ]; then
-                Download_Files https://cdn.mysql.com/archives/mysql-8.0/${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.xz ${Mysql_Ver}-linux-glibc2.12-${DB_ARCH}.tar.xz
+            [[ "${DB_ARCH}" = "aarch64" ]] && mysql8_glibc_ver="2.17" || mysql8_glibc_ver="2.12"
+            [[ "${DB_ARCH}" = "aarch64" ]] && mysql8_ext="tar.gz" || mysql8_ext="tar.xz"
+            Download_Files https://cdn.mysql.com/Downloads/MySQL-8.0/${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.${mysql8_ext} ${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.${mysql8_ext}
+            [[ $? -ne 0 ]] && Download_Files https://cdn.mysql.com/archives/mysql-8.0/${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.${mysql8_ext} ${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.${mysql8_ext}
+            if [ ! -s ${Mysql_Ver}-linux-glibc${mysql8_glibc_ver}-${DB_ARCH}.${mysql8_ext} ]; then
+                Echo_Red "Error! Unable to download MySQL 8.0 Generic Binaries, please download it to src directory manually."
+                sleep 5
+                exit 1
             fi
         else
             Download_Files ${Download_Mirror}/datebase/mysql/${Mysql_Ver}.tar.gz ${Mysql_Ver}.tar.gz
+            if [ ! -s ${Mysql_Ver}.tar.gz ]; then
+                Echo_Red "Error! Unable to download MySQL source code, please download it to src directory manually."
+                sleep 5
+                exit 1
+            fi
         fi
     elif [[ "${DBSelect}" =~ ^[6789]|10$ ]]; then
-        Download_Files ${Download_Mirror}/datebase/mariadb/${Mariadb_Ver}.tar.gz ${Mariadb_Ver}.tar.gz
+        Mariadb_Version=$(echo ${Mariadb_Ver} | cut -d- -f2)
+        if [ "${Bin}" = "y" ]; then
+            MariaDB_FileName="${Mariadb_Ver}-linux-systemd-${DB_ARCH}"
+        else
+            MariaDB_FileName="${Mariadb_Ver}"
+        fi
+        Download_Files https://downloads.mariadb.org/rest-api/mariadb/${Mariadb_Version}/${MariaDB_FileName}.tar.gz ${MariaDB_FileName}.tar.gz
+        if [ ! -s ${MariaDB_FileName}.tar.gz ]; then
+            Echo_Red "Error! Unable to download MariaDB, please download it to src directory manually."
+            sleep 5
+            exit 1
+        fi
     fi
     echo "============================check files=================================="
 

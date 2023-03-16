@@ -30,7 +30,8 @@ Install_Multiplephp()
     echo "10: Install ${PHP_Info[9]}"
     echo "11: Install ${PHP_Info[10]}"
     echo "12: Install ${PHP_Info[11]}"
-    read -p "Enter your choice (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 or 12): " PHPSelect
+    echo "13: Install ${PHP_Info[12]}"
+    read -p "Enter your choice (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 or 13): " PHPSelect
 
     case "${PHPSelect}" in
     1)
@@ -86,6 +87,10 @@ Install_Multiplephp()
         echo "You will install ${PHP_Info[11]}"
         MPHP_Path='/usr/local/php8.1'
         ;;
+    13)
+        echo "You will install ${PHP_Info[12]}"
+        MPHP_Path='/usr/local/php8.2'
+        ;;
     *)
         echo "No enter,You Must enter one option."
         exit 1
@@ -127,6 +132,8 @@ Install_Multiplephp()
         Install_MPHP8.0 2>&1 | tee /root/install-mphp8.0.log
     elif [ "${PHPSelect}" = "12" ]; then
         Install_MPHP8.1 2>&1 | tee /root/install-mphp8.1.log
+    elif [ "${PHPSelect}" = "13" ]; then
+        Install_MPHP8.2 2>&1 | tee /root/install-mphp8.2.log
     fi
 }
 
@@ -166,6 +173,7 @@ Install_MPHP5.2()
     \cp php.ini-dist ${MPHP_Path}/etc/php.ini
 
     # php extensions
+    sed -i 's#extension_dir = "./"#extension_dir = "/usr/local/php/lib/php/extensions/no-debug-non-zts-20060613/"\n#' /usr/local/php/etc/php.ini
     sed -i 's#output_buffering = Off#output_buffering = On#' ${MPHP_Path}/etc/php.ini
     sed -i 's/post_max_size = 8M/post_max_size = 50M/g' ${MPHP_Path}/etc/php.ini
     sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 50M/g' ${MPHP_Path}/etc/php.ini
@@ -226,7 +234,7 @@ Install_MPHP5.3()
     cd ${cur_dir}/src
     Download_Files ${Download_Mirror}/web/php/${Php_Ver}.tar.bz2 ${Php_Ver}.tar.bz2
     Echo_Blue "[+] Installing ${Php_Ver}..."
-    Tarj_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
+    Tar_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
     patch -p1 < ${cur_dir}/src/patch/php-5.3-multipart-form-data.patch
     ./configure --prefix=${MPHP_Path} --with-config-file-path=${MPHP_Path}/etc --with-config-file-scan-dir=${MPHP_Path}/conf.d --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-iconv-dir --with-freetype-dir=/usr/local/freetype --with-jpeg-dir --with-png-dir --with-zlib --with-libxml-dir=/usr --enable-xml --disable-rpath --enable-magic-quotes --enable-safe-mode --enable-bcmath --enable-shmop --enable-sysvsem --enable-inline-optimization ${with_curl} --enable-mbregex --enable-mbstring --with-mcrypt --enable-ftp --with-gd --enable-gd-native-ttf ${with_openssl} --with-mhash --enable-pcntl --enable-sockets --with-xmlrpc --enable-zip --enable-soap --with-gettext ${with_fileinfo} ${PHP_Buildin_Option} ${PHP_Modules_Options}
 
@@ -296,6 +304,7 @@ EOF
     echo "Copy php-fpm init.d file..."
     \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm5.3
     chmod +x /etc/init.d/php-fpm5.3
+    sed -i 's@# Provides:          php-fpm@# Provides:          php-fpm5.3@g' /etc/init.d/php-fpm5.3
 
     StartUp php-fpm5.3
 
@@ -324,7 +333,7 @@ Install_MPHP5.4()
     cd ${cur_dir}/src
     Download_Files ${Download_Mirror}/web/php/${Php_Ver}.tar.bz2 ${Php_Ver}.tar.bz2
     Echo_Blue "[+] Installing ${Php_Ver}..."
-    Tarj_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
+    Tar_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
     ./configure --prefix=${MPHP_Path} --with-config-file-path=${MPHP_Path}/etc --with-config-file-scan-dir=${MPHP_Path}/conf.d --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-iconv-dir --with-freetype-dir=/usr/local/freetype --with-jpeg-dir --with-png-dir --with-zlib --with-libxml-dir=/usr --enable-xml --disable-rpath --enable-bcmath --enable-shmop --enable-sysvsem --enable-inline-optimization ${with_curl} --enable-mbregex --enable-mbstring --with-mcrypt --enable-ftp --with-gd --enable-gd-native-ttf ${with_openssl} --with-mhash --enable-pcntl --enable-sockets --with-xmlrpc --enable-zip --enable-soap --with-gettext ${with_fileinfo} --enable-intl --with-xsl ${PHP_Buildin_Option} ${PHP_Modules_Options}
 
     PHP_Make_Install
@@ -391,6 +400,7 @@ EOF
     echo "Copy php-fpm init.d file..."
     \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm5.4
     chmod +x /etc/init.d/php-fpm5.4
+    sed -i 's@# Provides:          php-fpm@# Provides:          php-fpm5.4@g' /etc/init.d/php-fpm5.4
 
     StartUp php-fpm5.4
 
@@ -419,7 +429,7 @@ Install_MPHP5.5()
     cd ${cur_dir}/src
     Download_Files ${Download_Mirror}/web/php/${Php_Ver}.tar.bz2 ${Php_Ver}.tar.bz2
     Echo_Blue "[+] Installing ${Php_Ver}..."
-    Tarj_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
+    Tar_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
     ./configure --prefix=${MPHP_Path} --with-config-file-path=${MPHP_Path}/etc --with-config-file-scan-dir=${MPHP_Path}/conf.d --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-iconv-dir --with-freetype-dir=/usr/local/freetype --with-jpeg-dir --with-png-dir --with-zlib --with-libxml-dir=/usr --enable-xml --disable-rpath --enable-bcmath --enable-shmop --enable-sysvsem --enable-inline-optimization ${with_curl} --enable-mbregex --enable-mbstring --with-mcrypt --enable-ftp --with-gd --enable-gd-native-ttf ${with_openssl} --with-mhash --enable-pcntl --enable-sockets --with-xmlrpc --enable-zip --enable-soap --with-gettext ${with_fileinfo} --enable-opcache --enable-intl --with-xsl ${PHP_Buildin_Option} ${PHP_Modules_Options}
 
     PHP_Make_Install
@@ -486,6 +496,7 @@ EOF
     echo "Copy php-fpm init.d file..."
     \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm5.5
     chmod +x /etc/init.d/php-fpm5.5
+    sed -i 's@# Provides:          php-fpm@# Provides:          php-fpm5.5@g' /etc/init.d/php-fpm5.5
 
     StartUp php-fpm5.5
 
@@ -514,7 +525,7 @@ Install_MPHP5.6()
     cd ${cur_dir}/src
     Download_Files ${Download_Mirror}/web/php/${Php_Ver}.tar.bz2 ${Php_Ver}.tar.bz2
     Echo_Blue "[+] Installing ${Php_Ver}"
-    Tarj_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
+    Tar_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
     if command -v pkg-config >/dev/null 2>&1 && pkg-config --modversion icu-i18n | grep -Eqi '^6[1-9]|[7-9][0-9]'; then
         patch -p1 < ${cur_dir}/src/patch/php-5.6-intl.patch
     fi
@@ -584,6 +595,7 @@ EOF
     echo "Copy php-fpm init.d file..."
     \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm5.6
     chmod +x /etc/init.d/php-fpm5.6
+    sed -i 's@# Provides:          php-fpm@# Provides:          php-fpm5.6@g' /etc/init.d/php-fpm5.6
 
     StartUp php-fpm5.6
 
@@ -612,7 +624,7 @@ Install_MPHP7.0()
     cd ${cur_dir}/src
     Download_Files ${Download_Mirror}/web/php/${Php_Ver}.tar.bz2 ${Php_Ver}.tar.bz2
     Echo_Blue "[+] Installing ${Php_Ver}"
-    Tarj_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
+    Tar_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
     if command -v pkg-config >/dev/null 2>&1 && pkg-config --modversion icu-i18n | grep -Eqi '^6[1-9]|[7-9][0-9]'; then
         patch -p1 < ${cur_dir}/src/patch/php-7.0-intl.patch
     fi
@@ -667,6 +679,7 @@ EOF
     echo "Copy php-fpm init.d file..."
     \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm7.0
     chmod +x /etc/init.d/php-fpm7.0
+    sed -i 's@# Provides:          php-fpm@# Provides:          php-fpm7.0@g' /etc/init.d/php-fpm7.0
 
     StartUp php-fpm7.0
 
@@ -695,7 +708,7 @@ Install_MPHP7.1()
     cd ${cur_dir}/src
     Download_Files ${Download_Mirror}/web/php/${Php_Ver}.tar.bz2 ${Php_Ver}.tar.bz2
     Echo_Blue "[+] Installing ${Php_Ver}"
-    Tarj_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
+    Tar_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
     PHP_Openssl3_Patch
     PHP_ICU70_Patch
     ./configure --prefix=${MPHP_Path} --with-config-file-path=${MPHP_Path}/etc --with-config-file-scan-dir=${MPHP_Path}/conf.d --enable-fpm --with-fpm-user=www --with-fpm-group=www --enable-mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-iconv-dir --with-freetype-dir=/usr/local/freetype --with-jpeg-dir --with-png-dir --with-zlib --with-libxml-dir=/usr --enable-xml --disable-rpath --enable-bcmath --enable-shmop --enable-sysvsem --enable-inline-optimization ${with_curl} --enable-mbregex --enable-mbstring --enable-intl --enable-pcntl --with-mcrypt --enable-ftp --with-gd --enable-gd-native-ttf ${with_openssl} --with-mhash --enable-pcntl --enable-sockets --with-xmlrpc --enable-zip --enable-soap --with-gettext ${with_fileinfo} --enable-opcache --with-xsl ${PHP_Buildin_Option} ${PHP_Modules_Options}
@@ -749,6 +762,7 @@ EOF
     echo "Copy php-fpm init.d file..."
     \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm7.1
     chmod +x /etc/init.d/php-fpm7.1
+    sed -i 's@# Provides:          php-fpm@# Provides:          php-fpm7.1@g' /etc/init.d/php-fpm7.1
 
     StartUp php-fpm7.1
 
@@ -777,7 +791,7 @@ Install_MPHP7.2()
     cd ${cur_dir}/src
     Download_Files ${Download_Mirror}/web/php/${Php_Ver}.tar.bz2 ${Php_Ver}.tar.bz2
     Echo_Blue "[+] Installing ${Php_Ver}"
-    Tarj_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
+    Tar_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
     PHP_Openssl3_Patch
     PHP_ICU70_Patch
     ./configure --prefix=${MPHP_Path} --with-config-file-path=${MPHP_Path}/etc --with-config-file-scan-dir=${MPHP_Path}/conf.d --enable-fpm --with-fpm-user=www --with-fpm-group=www --enable-mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-iconv-dir --with-freetype-dir=/usr/local/freetype --with-jpeg-dir --with-png-dir --with-zlib --with-libxml-dir=/usr --enable-xml --disable-rpath --enable-bcmath --enable-shmop --enable-sysvsem --enable-inline-optimization ${with_curl} --enable-mbregex --enable-mbstring --enable-intl --enable-pcntl --enable-ftp --with-gd ${with_openssl} --with-mhash --enable-pcntl --enable-sockets --with-xmlrpc --enable-zip --enable-soap --with-gettext ${with_fileinfo} --enable-opcache --with-xsl ${PHP_Buildin_Option} ${PHP_Modules_Options}
@@ -831,6 +845,7 @@ EOF
     echo "Copy php-fpm init.d file..."
     \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm7.2
     chmod +x /etc/init.d/php-fpm7.2
+    sed -i 's@# Provides:          php-fpm@# Provides:          php-fpm7.2@g' /etc/init.d/php-fpm7.2
 
     StartUp php-fpm7.2
 
@@ -859,7 +874,7 @@ Install_MPHP7.3()
     cd ${cur_dir}/src
     Download_Files ${Download_Mirror}/web/php/${Php_Ver}.tar.bz2 ${Php_Ver}.tar.bz2
     Echo_Blue "[+] Installing ${Php_Ver}"
-    Tarj_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
+    Tar_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
     PHP_Openssl3_Patch
     PHP_ICU70_Patch
     ./configure --prefix=${MPHP_Path} --with-config-file-path=${MPHP_Path}/etc --with-config-file-scan-dir=${MPHP_Path}/conf.d --enable-fpm --with-fpm-user=www --with-fpm-group=www --enable-mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-iconv-dir --with-freetype-dir=/usr/local/freetype --with-jpeg-dir --with-png-dir --with-zlib --with-libxml-dir=/usr --enable-xml --disable-rpath --enable-bcmath --enable-shmop --enable-sysvsem --enable-inline-optimization ${with_curl} --enable-mbregex --enable-mbstring --enable-intl --enable-pcntl --enable-ftp --with-gd ${with_openssl} --with-mhash --enable-pcntl --enable-sockets --with-xmlrpc --enable-zip --without-libzip --enable-soap --with-gettext ${with_fileinfo} --enable-opcache --with-xsl ${PHP_Buildin_Option} ${PHP_Modules_Options}
@@ -913,6 +928,7 @@ EOF
     echo "Copy php-fpm init.d file..."
     \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm7.3
     chmod +x /etc/init.d/php-fpm7.3
+    sed -i 's@# Provides:          php-fpm@# Provides:          php-fpm7.3@g' /etc/init.d/php-fpm7.3
 
     StartUp php-fpm7.3
 
@@ -942,9 +958,9 @@ Install_MPHP7.4()
     Download_Files ${Download_Mirror}/web/php/${Php_Ver}.tar.bz2 ${Php_Ver}.tar.bz2
     Install_Libzip
     Echo_Blue "[+] Installing ${Php_Ver}"
-    Tarj_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
+    Tar_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
     PHP_Openssl3_Patch
-    ./configure --prefix=${MPHP_Path} --with-config-file-path=${MPHP_Path}/etc --with-config-file-scan-dir=${MPHP_Path}/conf.d --enable-fpm --with-fpm-user=www --with-fpm-group=www --enable-mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-iconv-dir --with-freetype=/usr/local/freetype --with-jpeg --with-png --with-zlib --enable-xml --disable-rpath --enable-bcmath --enable-shmop --enable-sysvsem --enable-inline-optimization ${with_curl} --enable-mbregex --enable-mbstring --enable-intl --enable-pcntl --enable-ftp --enable-gd ${with_openssl} --with-mhash --enable-pcntl --enable-sockets --with-xmlrpc --enable-zip --without-libzip --enable-soap --with-gettext ${with_fileinfo} --enable-opcache --with-xsl --with-pear --with-webp ${PHP_Buildin_Option} ${PHP_Modules_Options}
+    ./configure --prefix=${MPHP_Path} --with-config-file-path=${MPHP_Path}/etc --with-config-file-scan-dir=${MPHP_Path}/conf.d --enable-fpm --with-fpm-user=www --with-fpm-group=www --enable-mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-iconv-dir --with-freetype=/usr/local/freetype --with-jpeg --with-png --with-zlib --enable-xml --disable-rpath --enable-bcmath --enable-shmop --enable-sysvsem --enable-inline-optimization ${with_curl} --enable-mbregex --enable-mbstring --enable-intl --enable-pcntl --enable-ftp --enable-gd ${with_openssl} --with-mhash --enable-pcntl --enable-sockets --with-xmlrpc --with-zip --without-libzip --enable-soap --with-gettext ${with_fileinfo} --enable-opcache --with-xsl --with-pear --with-webp ${PHP_Buildin_Option} ${PHP_Modules_Options}
 
     PHP_Make_Install
 
@@ -995,6 +1011,7 @@ EOF
     echo "Copy php-fpm init.d file..."
     \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm7.4
     chmod +x /etc/init.d/php-fpm7.4
+    sed -i 's@# Provides:          php-fpm@# Provides:          php-fpm7.4@g' /etc/init.d/php-fpm7.4
 
     StartUp php-fpm7.4
 
@@ -1024,7 +1041,7 @@ Install_MPHP8.0()
     Download_Files ${Download_Mirror}/web/php/${Php_Ver}.tar.bz2 ${Php_Ver}.tar.bz2
     Install_Libzip
     Echo_Blue "[+] Installing ${Php_Ver}"
-    Tarj_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
+    Tar_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
     PHP_Openssl3_Patch
     ./configure --prefix=${MPHP_Path} --with-config-file-path=${MPHP_Path}/etc --with-config-file-scan-dir=${MPHP_Path}/conf.d --enable-fpm --with-fpm-user=www --with-fpm-group=www --enable-mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-iconv=/usr/local --with-freetype=/usr/local/freetype --with-jpeg --with-zlib --enable-xml --disable-rpath --enable-bcmath --enable-shmop --enable-sysvsem ${with_curl} --enable-mbregex --enable-mbstring --enable-intl --enable-pcntl --enable-ftp --enable-gd ${with_openssl} --with-mhash --enable-pcntl --enable-sockets --with-zip --enable-soap --with-gettext ${with_fileinfo} --enable-opcache --with-xsl --with-pear --with-webp ${PHP_Buildin_Option} ${PHP_Modules_Options}
 
@@ -1077,6 +1094,7 @@ EOF
     echo "Copy php-fpm init.d file..."
     \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm8.0
     chmod +x /etc/init.d/php-fpm8.0
+    sed -i 's@# Provides:          php-fpm@# Provides:          php-fpm8.0@g' /etc/init.d/php-fpm8.0
 
     StartUp php-fpm8.0
 
@@ -1106,7 +1124,7 @@ Install_MPHP8.1()
     Download_Files ${Download_Mirror}/web/php/${Php_Ver}.tar.bz2 ${Php_Ver}.tar.bz2
     Install_Libzip
     Echo_Blue "[+] Installing ${Php_Ver}"
-    Tarj_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
+    Tar_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
     ./configure --prefix=${MPHP_Path} --with-config-file-path=${MPHP_Path}/etc --with-config-file-scan-dir=${MPHP_Path}/conf.d --enable-fpm --with-fpm-user=www --with-fpm-group=www --enable-mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-iconv=/usr/local --with-freetype=/usr/local/freetype --with-jpeg --with-zlib --enable-xml --disable-rpath --enable-bcmath --enable-shmop --enable-sysvsem ${with_curl} --enable-mbregex --enable-mbstring --enable-intl --enable-pcntl --enable-ftp --enable-gd ${with_openssl} --with-mhash --enable-pcntl --enable-sockets --with-zip --enable-soap --with-gettext ${with_fileinfo} --enable-opcache --with-xsl --with-pear --with-webp ${PHP_Buildin_Option} ${PHP_Modules_Options}
 
     PHP_Make_Install
@@ -1158,6 +1176,7 @@ EOF
     echo "Copy php-fpm init.d file..."
     \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm8.1
     chmod +x /etc/init.d/php-fpm8.1
+    sed -i 's@# Provides:          php-fpm@# Provides:          php-fpm8.1@g' /etc/init.d/php-fpm8.1
 
     StartUp php-fpm8.1
 
@@ -1176,5 +1195,87 @@ EOF
     else
         rm -rf ${MPHP_Path}
         Echo_Red "Failed to install ${Php_Ver}, you can download /root/install-mphp8.1.log from your server, and upload install-mphp8.1.log to LNMP Forum."
+    fi
+}
+
+Install_MPHP8.2()
+{
+    lnmp stop
+
+    cd ${cur_dir}/src
+    Download_Files ${Download_Mirror}/web/php/${Php_Ver}.tar.bz2 ${Php_Ver}.tar.bz2
+    Install_Libzip
+    Echo_Blue "[+] Installing ${Php_Ver}"
+    Tar_Cd ${Php_Ver}.tar.bz2 ${Php_Ver}
+    ./configure --prefix=${MPHP_Path} --with-config-file-path=${MPHP_Path}/etc --with-config-file-scan-dir=${MPHP_Path}/conf.d --enable-fpm --with-fpm-user=www --with-fpm-group=www --enable-mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-iconv=/usr/local --with-freetype=/usr/local/freetype --with-jpeg --with-zlib --enable-xml --disable-rpath --enable-bcmath --enable-shmop --enable-sysvsem ${with_curl} --enable-mbregex --enable-mbstring --enable-intl --enable-pcntl --enable-ftp --enable-gd ${with_openssl} --with-mhash --enable-pcntl --enable-sockets --with-zip --enable-soap --with-gettext ${with_fileinfo} --enable-opcache --with-xsl --with-pear --with-webp ${PHP_Buildin_Option} ${PHP_Modules_Options}
+
+    PHP_Make_Install
+
+    echo "Copy new php configure file..."
+    mkdir -p ${MPHP_Path}/{etc,conf.d}
+    \cp php.ini-production ${MPHP_Path}/etc/php.ini
+
+    # php extensions
+    echo "Modify php.ini......"
+    sed -i 's/post_max_size =.*/post_max_size = 50M/g' ${MPHP_Path}/etc/php.ini
+    sed -i 's/upload_max_filesize =.*/upload_max_filesize = 50M/g' ${MPHP_Path}/etc/php.ini
+    sed -i 's/;date.timezone =.*/date.timezone = PRC/g' ${MPHP_Path}/etc/php.ini
+    sed -i 's/short_open_tag =.*/short_open_tag = On/g' ${MPHP_Path}/etc/php.ini
+    sed -i 's/;cgi.fix_pathinfo=.*/cgi.fix_pathinfo=0/g' ${MPHP_Path}/etc/php.ini
+    sed -i 's/max_execution_time =.*/max_execution_time = 300/g' ${MPHP_Path}/etc/php.ini
+    sed -i 's/disable_functions =.*/disable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,proc_open,proc_get_status,popen,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,stream_socket_server/g' ${MPHP_Path}/etc/php.ini
+
+    cd ${cur_dir}/src
+    echo "Install ZendGuardLoader for PHP 8.2..."
+    echo "unavailable now."
+
+    echo "Creating new php-fpm configure file..."
+    cat >${MPHP_Path}/etc/php-fpm.conf<<EOF
+[global]
+pid = ${MPHP_Path}/var/run/php-fpm.pid
+error_log = ${MPHP_Path}/var/log/php-fpm.log
+log_level = notice
+
+[www]
+listen = /tmp/php-cgi8.1.sock
+listen.backlog = -1
+listen.allowed_clients = 127.0.0.1
+listen.owner = www
+listen.group = www
+listen.mode = 0666
+user = www
+group = www
+pm = dynamic
+pm.max_children = 10
+pm.start_servers = 2
+pm.min_spare_servers = 1
+pm.max_spare_servers = 6
+request_terminate_timeout = 100
+request_slowlog_timeout = 0
+slowlog = var/log/slow.log
+EOF
+
+    echo "Copy php-fpm init.d file..."
+    \cp ${cur_dir}/src/${Php_Ver}/sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm8.2
+    chmod +x /etc/init.d/php-fpm8.2
+    sed -i 's@# Provides:          php-fpm@# Provides:          php-fpm8.2@g' /etc/init.d/php-fpm8.2
+
+    StartUp php-fpm8.2
+
+    \cp ${cur_dir}/conf/enable-php8.2.conf /usr/local/nginx/conf/enable-php8.2.conf
+
+    sleep 2
+
+    lnmp start
+
+    rm -rf ${cur_dir}/src/${Php_Ver}
+
+    if [ -s ${MPHP_Path}/sbin/php-fpm ] && [ -s ${MPHP_Path}/etc/php.ini ] && [ -s ${MPHP_Path}/bin/php ]; then
+        echo "==========================================="
+        Echo_Green "You have successfully install ${Php_Ver} "
+        echo "==========================================="
+    else
+        rm -rf ${MPHP_Path}
+        Echo_Red "Failed to install ${Php_Ver}, you can download /root/install-mphp8.2.log from your server, and upload install-mphp8.2.log to LNMP Forum."
     fi
 }

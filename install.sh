@@ -15,7 +15,7 @@ else
     Stack=$1
 fi
 
-LNMP_Ver='1.9'
+LNMP_Ver='2.0'
 . lnmp.conf
 . include/main.sh
 . include/init.sh
@@ -62,8 +62,8 @@ Init_Install()
     Print_Sys_Info
     Check_Hosts
     Check_CMPT
-    Modify_Source
     if [ "${CheckMirror}" != "n" ]; then
+        Modify_Source
         Check_Mirror
     fi
     Add_Swap
@@ -149,6 +149,8 @@ Install_PHP()
         Install_PHP_80
     elif [ "${PHPSelect}" = "12" ]; then
         Install_PHP_81
+    elif [ "${PHPSelect}" = "13" ]; then
+        Install_PHP_82
     fi
     Clean_PHP_Src_Dir
 }
