@@ -1,0 +1,157 @@
+FROM centos:7
+
+LABEL maintainer="lnmp container"
+LABEL description="PHP 5.3 on CentOS 7"
+
+# 替换为CentOS vault镜像源
+RUN cd /etc/yum.repos.d/ && \
+    sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-* && \
+    sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-* && \
+    yum clean all
+
+# 添加EPEL源以获取更多依赖包
+RUN yum -y install epel-release && yum clean all
+
+# 安装所有必要的依赖，一次性完成以减少层数
+RUN yum -y update && \
+    yum -y install \
+    wget \
+    curl \
+    vim \
+    tar \
+    net-tools \
+    gcc \
+    gcc-c++ \
+    make \
+    libxml2-devel \
+    libjpeg-devel \
+    libpng-devel \
+    freetype-devel \
+    libmcrypt-devel \
+    mhash-devel \
+    libcurl-devel \
+    openssl-devel \
+    bzip2-devel \
+    libc-client-devel \
+    krb5-devel \
+    libicu-devel \
+    gmp-devel \
+    autoconf \
+    bison \
+    re2c && \
+    # 确保libmcrypt正确安装
+    yum -y reinstall libmcrypt libmcrypt-devel && \
+    yum clean all
+
+RUN yum install -y mariadb-devel glibc-devel libxcrypt-devel && \
+    yum clean all
+
+# 创建www用户和用户组
+RUN groupadd -r www && \
+    useradd -r -g www -s /sbin/nologin -d /usr/local/php -M www
+
+# 修复CentOS 7下编译PHP 5.3的问题
+RUN mkdir -p /usr/include/libc-client/ && \
+    ln -sf /usr/lib64/libc-client.so /usr/lib/libc-client.so && \
+    if [ -d "/usr/include/c-client" ]; then \
+        ln -sf /usr/include/c-client/* /usr/include/libc-client/; \
+    fi
+
+# 为MySQL客户端库创建软链接 - MariaDB作为MySQL的替代品
+RUN mkdir -p /usr/local/mysql/lib && \
+    mkdir -p /usr/local/mysql/bin && \
+    ln -sf /usr/lib64/mysql /usr/local/mysql/lib && \
+    ln -sf /usr/lib64/mysql/libmysqlclient.so /usr/local/mysql/lib/libmysqlclient.so && \
+    ln -sf /usr/bin/mysql_config /usr/local/mysql/bin/mysql_config
+
+# 下载、解压并编译PHP 5.3.29
+WORKDIR /tmp
+RUN curl -o php-5.3.29.tar.gz https://www.php.net/distributions/php-5.3.29.tar.gz && \
+    tar zxf php-5.3.29.tar.gz && \
+    cd php-5.3.29 && \
+    # 修复PHP 5.3在现代系统上的编译问题
+    sed -i 's#(\*gcm=\*)#(*gcm=*), (*aes\*), (*ctr\*)#' ext/openssl/openssl.c && \
+    sed -i 's/-n32/-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64/g' configure && \
+    sed -i 's/ZEND_EXTRA_LIBS="$ZEND_EXTRA_LIBS -lpthread"/ZEND_EXTRA_LIBS="$ZEND_EXTRA_LIBS -lpthread -lrt"/g' configure && \
+    # 配置PHP
+./configure \
+    --prefix=/usr/local/php \
+    --with-config-file-path=/usr/local/php/etc \
+        --with-mysql=/usr \
+    --with-mysqli=/usr/bin/mysql_config \
+    --with-pdo-mysql=/usr \
+    --with-iconv-dir \
+    --with-freetype-dir \
+    --with-jpeg-dir \
+    --with-png-dir \
+    --with-zlib \
+    --with-libxml-dir=/usr \
+    --enable-xml \
+    --disable-rpath \
+    --enable-bcmath \
+    --enable-shmop \
+    --enable-sysvsem \
+    --enable-inline-optimization \
+    --with-curl \
+    --enable-mbregex \
+    --enable-fpm \
+    --enable-mbstring \
+    --with-mcrypt \
+    --with-gd \
+    --enable-gd-native-ttf \
+    --with-openssl \
+    --with-mhash \
+    --enable-pcntl \
+    --enable-sockets \
+    --with-xmlrpc \
+    --enable-zip \
+    --enable-soap \
+    --without-pear \
+    --with-gettext \
+    --disable-fileinfo \
+    --enable-maintainer-zts && \
+    # 编译安装
+    make ZEND_EXTRA_LIBS='-liconv -lrt' && \
+    make install && \
+    # 复制配置文件
+    cp php.ini-production /usr/local/php/etc/php.ini && \
+    cp sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm && \
+    chmod +x /etc/init.d/php-fpm
+
+# 配置PHP-FPM
+RUN cd /usr/local/php/etc && \
+    cp php-fpm.conf.default php-fpm.conf && \
+    sed -i 's/;pid = run\/php-fpm.pid/pid = run\/php-fpm.pid/' php-fpm.conf && \
+    sed -i 's/;error_log = log\/php-fpm.log/error_log = log\/php-fpm.log/' php-fpm.conf && \
+    sed -i 's/;log_level = notice/log_level = notice/' php-fpm.conf && \
+    cd /usr/local/php/etc/php-fpm.d && \
+    cp www.conf.default www.conf && \
+    sed -i 's/;listen.owner = nobody/listen.owner = www/' www.conf && \
+    sed -i 's/;listen.group = nobody/listen.group = www/' www.conf && \
+    sed -i 's/user = nobody/user = www/' www.conf && \
+    sed -i 's/group = nobody/group = www/' www.conf && \
+    sed -i 's/^;pm.max_requests = 500/pm.max_requests = 500/' www.conf && \
+    sed -i 's/^;listen.mode = 0660/listen.mode = 0660/' www.conf
+
+# 创建必要的目录并设置权限
+RUN mkdir -p /usr/local/php/logs /usr/local/php/var/run && \
+    touch /usr/local/php/logs/php-fpm.log && \
+    chown -R www:www /usr/local/php/logs /usr/local/php/var
+
+# 添加PHP二进制文件到PATH
+ENV PATH=$PATH:/usr/local/php/bin:/usr/local/php/sbin
+
+# 清理不必要的临时文件
+RUN rm -rf /tmp/php-5.3.29*
+
+# 创建启动脚本
+RUN echo '#!/bin/bash' > /start.sh && \
+    echo '/etc/init.d/php-fpm start' >> /start.sh && \
+    echo 'exec tail -f /usr/local/php/logs/php-fpm.log' >> /start.sh && \
+    chmod +x /start.sh
+
+# 暴露PHP-FPM端口
+EXPOSE 9000
+
+# 使用exec形式的CMD，更好地处理信号
+CMD ["/start.sh"]
